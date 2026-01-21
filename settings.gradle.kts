@@ -21,3 +21,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "Tiyin"
 include(":app")
+include(":core:data")
+include(":core:domain")
+include(":feature:home")
+include(":core:designsystem")
+include(":core:ui")
