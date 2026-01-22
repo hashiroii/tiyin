@@ -5,4 +5,9 @@
     <string name="stat_spending">Spending</string>
     <string name="stat_subscription">subscription</string>
     <string name="stat_subscriptions">subscriptions</string>
+    <string name="active_subscriptions">Active Subscriptions</string>
+    <string name="total_spending">Total Spending</string>
+    
+    <string name="error_loading_subscriptions">Failed to load subscriptions</string>
+    <string name="error_unknown">An unknown error occurred</string>
 </resources>

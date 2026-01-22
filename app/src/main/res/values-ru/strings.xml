@@ -5,4 +5,9 @@
     <string name="stat_spending">Расходы</string>
     <string name="stat_subscription">подписка</string>
     <string name="stat_subscriptions">подписки</string>
+    <string name="active_subscriptions">Активные подписки</string>
+    <string name="total_spending">Общие расходы</string>
+    
+    <string name="error_loading_subscriptions">Не удалось загрузить подписки</string>
+    <string name="error_unknown">Произошла неизвестная ошибка</string>
 </resources>
