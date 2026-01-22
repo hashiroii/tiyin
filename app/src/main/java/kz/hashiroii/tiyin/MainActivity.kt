@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import kz.hashiroii.designsystem.theme.TiyinTheme
 import kz.hashiroii.home.HomeScreen
-import kz.hashiroii.tiyin.ui.theme.TiyinTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
