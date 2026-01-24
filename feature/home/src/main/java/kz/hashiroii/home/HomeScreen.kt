@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -27,10 +28,13 @@ import kz.hashiroii.domain.model.service.ServiceType
 import kz.hashiroii.domain.model.service.Subscription
 import kz.hashiroii.domain.model.service.SubscriptionPeriod
 import kz.hashiroii.ui.ActiveSubscriptionsRow
-import kz.hashiroii.ui.StringProvider
+import kz.hashiroii.ui.CachedStringProvider
+import kz.hashiroii.ui.rememberCachedStringProvider
 import kz.hashiroii.ui.SubscriptionCard
 import kz.hashiroii.ui.TotalSpendingCard
 import kz.hashiroii.ui.UiText
+import kz.hashiroii.ui.util.CurrencyFormatter
+import java.math.BigDecimal
 import java.time.LocalDate
 
 @Composable
@@ -68,21 +72,30 @@ fun HomeScreen(
             }
             
             is HomeUiState.Success -> {
+                val stringProvider = rememberCachedStringProvider()
+                
                 val context = LocalContext.current
-                val stringProvider = StringProvider(context)
+                val packageName = context.packageName
                 
-                val totalSpendingTitle = stringProvider.getString(
-                    resourceName = "total_spending",
-                    packageName = "kz.hashiroii.tiyin",
-                    default = "Total Spending"
-                )
-                val activeSubscriptionsLabel = stringProvider.getString(
-                    resourceName = "active_subscriptions",
-                    packageName = "kz.hashiroii.tiyin",
-                    default = "Active Subscriptions"
-                )
+                val totalSpendingTitle = remember {
+                    stringProvider.getString(
+                        resourceName = "total_spending",
+                        packageName = packageName,
+                        default = "Total Spending"
+                    )
+                }
+                val activeSubscriptionsLabel = remember {
+                    stringProvider.getString(
+                        resourceName = "active_subscriptions",
+                        packageName = packageName,
+                        default = "Active Subscriptions"
+                    )
+                }
                 
-                val spendingAmount = uiState.totalCost.asString()
+                val spendingAmount = CurrencyFormatter.format(
+                    uiState.totalCost,
+                    uiState.totalCostCurrency
+                )
                 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -139,7 +152,7 @@ fun HomeScreen(
 @Preview(name = "Loading - Light", showBackground = true)
 @Composable
 private fun HomeScreenLoadingLightPreview() {
-    TiyinTheme(darkTheme = false) {
+    TiyinTheme(themePreference = "Light") {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {
@@ -154,7 +167,7 @@ private fun HomeScreenLoadingLightPreview() {
 @Preview(name = "Loading - Dark", showBackground = true)
 @Composable
 private fun HomeScreenLoadingDarkPreview() {
-    TiyinTheme(darkTheme = true) {
+    TiyinTheme(themePreference = "Dark") {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {
@@ -169,7 +182,7 @@ private fun HomeScreenLoadingDarkPreview() {
 @Preview(name = "Success - Light", showBackground = true)
 @Composable
 private fun HomeScreenSuccessLightPreview() {
-    TiyinTheme(darkTheme = false) {
+    TiyinTheme(themePreference = "Light") {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {
@@ -184,7 +197,8 @@ private fun HomeScreenSuccessLightPreview() {
                                 secondaryColor = 0xFF191414,
                                 serviceType = ServiceType.STREAMING
                             ),
-                            cost = "$9.99",
+                            amount = BigDecimal("9.99"),
+                            currency = "USD",
                             period = SubscriptionPeriod.MONTHLY,
                             nextPaymentDate = LocalDate.now().plusDays(5),
                             currentPaymentDate = LocalDate.now().minusDays(25)
@@ -197,14 +211,15 @@ private fun HomeScreenSuccessLightPreview() {
                                 secondaryColor = 0xFF000000,
                                 serviceType = ServiceType.STREAMING
                             ),
-                            cost = "$15.99",
+                            amount = BigDecimal("15.99"),
+                            currency = "USD",
                             period = SubscriptionPeriod.MONTHLY,
                             nextPaymentDate = LocalDate.now().plusDays(12),
                             currentPaymentDate = LocalDate.now().minusDays(18)
                         )
                     ),
                     activeSubscriptionsCount = 2,
-                    totalCost = UiText.DynamicString("₸12,470.40"),
+                    totalCost = 12470.40,
                     totalCostCurrency = "KZT"
                 ),
                 onIntent = {}
@@ -216,7 +231,7 @@ private fun HomeScreenSuccessLightPreview() {
 @Preview(name = "Success - Dark", showBackground = true)
 @Composable
 private fun HomeScreenSuccessDarkPreview() {
-    TiyinTheme(darkTheme = true) {
+    TiyinTheme(themePreference = "Dark") {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {
@@ -231,14 +246,15 @@ private fun HomeScreenSuccessDarkPreview() {
                                 secondaryColor = 0xFF191414,
                                 serviceType = ServiceType.STREAMING
                             ),
-                            cost = "$9.99",
+                            amount = BigDecimal("9.99"),
+                            currency = "USD",
                             period = SubscriptionPeriod.MONTHLY,
                             nextPaymentDate = LocalDate.now().plusDays(5),
                             currentPaymentDate = LocalDate.now().minusDays(25)
                         )
                     ),
                     activeSubscriptionsCount = 1,
-                    totalCost = UiText.DynamicString("₸4,795.20"),
+                    totalCost = 4795.20,
                     totalCostCurrency = "KZT"
                 ),
                 onIntent = {}
@@ -250,7 +266,7 @@ private fun HomeScreenSuccessDarkPreview() {
 @Preview(name = "Error - Light", showBackground = true)
 @Composable
 private fun HomeScreenErrorLightPreview() {
-    TiyinTheme(darkTheme = false) {
+    TiyinTheme(themePreference = "Light") {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {
@@ -267,7 +283,7 @@ private fun HomeScreenErrorLightPreview() {
 @Preview(name = "Error - Dark", showBackground = true)
 @Composable
 private fun HomeScreenErrorDarkPreview() {
-    TiyinTheme(darkTheme = true) {
+    TiyinTheme(themePreference = "Dark") {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {

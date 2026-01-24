@@ -9,7 +9,7 @@ sealed interface HomeUiState {
     data class Success(
         val subscriptions: List<Subscription>,
         val activeSubscriptionsCount: Int,
-        val totalCost: UiText,
+        val totalCost: Double,
         val totalCostCurrency: String
     ) : HomeUiState
     
