@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,14 +42,23 @@ import kz.hashiroii.domain.model.service.ServiceInfo
 import kz.hashiroii.domain.model.service.ServiceType
 import kz.hashiroii.domain.model.service.Subscription
 import kz.hashiroii.domain.model.service.SubscriptionPeriod
+import kz.hashiroii.ui.CachedStringProvider
+import kz.hashiroii.ui.ServiceLogo
+import kz.hashiroii.ui.rememberCachedStringProvider
+import kz.hashiroii.ui.util.CurrencyFormatter
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @Composable
 fun SubscriptionCard(
     subscription: Subscription,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val packageName = context.packageName
+    val stringProvider = rememberCachedStringProvider()
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -68,39 +78,11 @@ fun SubscriptionCard(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.Top
             ) {
-                if (!subscription.serviceInfo.logoUrl.isNullOrEmpty()) {
-                    SubcomposeAsyncImage(
-                        model = subscription.serviceInfo.logoUrl,
-                        contentDescription = subscription.serviceInfo.name,
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(RoundedCornerShape(16.dp)),
-                        contentScale = ContentScale.Crop,
-                        loading = {
-                            Icon(
-                                imageVector = Icons.Default.Image,
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp),
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                            )
-                        },
-                        error = {
-                            Icon(
-                                imageVector = Icons.Default.Image,
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp),
-                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                            )
-                        }
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Image,
-                        contentDescription = subscription.serviceInfo.name,
-                        modifier = Modifier.size(80.dp),
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
+                ServiceLogo(
+                    serviceInfo = subscription.serviceInfo,
+                    modifier = Modifier,
+                    size = 40.dp
+                )
                 
                 Spacer(modifier = Modifier.width(16.dp))
                 
@@ -126,14 +108,17 @@ fun SubscriptionCard(
                         modifier = Modifier.widthIn(min = 80.dp)
                     ) {
                         Text(
-                            text = subscription.cost,
+                            text = CurrencyFormatter.format(
+                                subscription.amount.toDouble(),
+                                subscription.currency
+                            ),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = subscription.period.name,
+                            text = getPeriodLabel(stringProvider, subscription.period),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -147,11 +132,29 @@ fun SubscriptionCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(top = 8.dp)
                 ) {
-                    val daysLeft = subscription.daysUntilNextPayment()
+                    val today = java.time.LocalDate.now()
+                    val daysLeft = subscription.daysUntilNextPayment(today)
                     Text(
-                        text = if (daysLeft > 0) "$daysLeft days left" else "Due today",
+                        text = if (daysLeft > 0) {
+                            java.lang.String.format(
+                                stringProvider.getString(
+                                    resourceName = "subscription_days_left",
+                                    packageName = packageName,
+                                    default = "%1\$d days left"
+                                ),
+                                daysLeft
+                            )
+                        } else {
+                            stringProvider.getString(
+                                resourceName = "subscription_due_today",
+                                packageName = packageName,
+                                default = "Due today"
+                            )
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -159,7 +162,7 @@ fun SubscriptionCard(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     LinearProgressIndicator(
-                        progress = { subscription.progressPercentage() },
+                        progress = { subscription.progressPercentage(today) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp)
@@ -172,14 +175,21 @@ fun SubscriptionCard(
                 Spacer(modifier = Modifier.width(16.dp))
                 
                 TiyinChip(
-                    text = getServiceTypeLabel(subscription.serviceInfo.serviceType)
+                    text = getServiceTypeLabel(stringProvider, subscription.serviceInfo.serviceType)
                 )
             }
             
             Spacer(modifier = Modifier.height(12.dp))
             
             Text(
-                text = "Next payment: ${subscription.nextPaymentDate.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))}",
+                text = java.lang.String.format(
+                    stringProvider.getString(
+                        resourceName = "subscription_next_payment",
+                        packageName = packageName,
+                        default = "Next payment: %1\$s"
+                    ),
+                    subscription.nextPaymentDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -187,25 +197,35 @@ fun SubscriptionCard(
     }
 }
 
-private fun getServiceTypeLabel(serviceType: ServiceType): String {
+private fun getServiceTypeLabel(stringProvider: CachedStringProvider, serviceType: ServiceType): String {
     return when (serviceType) {
-        ServiceType.STREAMING -> "Streaming"
-        ServiceType.AUDIOBOOK -> "Audiobook"
-        ServiceType.SOFTWARE -> "Software"
-        ServiceType.NEWS -> "News"
-        ServiceType.FITNESS -> "Fitness"
-        ServiceType.EDUCATION -> "Education"
-        ServiceType.GAMING -> "Gaming"
-        ServiceType.CLOUD_STORAGE -> "Cloud Storage"
-        ServiceType.PRODUCTIVITY -> "Productivity"
-        ServiceType.OTHER -> "Other"
+        ServiceType.STREAMING -> stringProvider.getString("service_type_streaming", "kz.hashiroii.tiyin", "Streaming")
+        ServiceType.AUDIOBOOK -> stringProvider.getString("service_type_audiobook", "kz.hashiroii.tiyin", "Audiobook")
+        ServiceType.SOFTWARE -> stringProvider.getString("service_type_software", "kz.hashiroii.tiyin", "Software")
+        ServiceType.NEWS -> stringProvider.getString("service_type_news", "kz.hashiroii.tiyin", "News")
+        ServiceType.FITNESS -> stringProvider.getString("service_type_fitness", "kz.hashiroii.tiyin", "Fitness")
+        ServiceType.EDUCATION -> stringProvider.getString("service_type_education", "kz.hashiroii.tiyin", "Education")
+        ServiceType.GAMING -> stringProvider.getString("service_type_gaming", "kz.hashiroii.tiyin", "Gaming")
+        ServiceType.CLOUD_STORAGE -> stringProvider.getString("service_type_cloud_storage", "kz.hashiroii.tiyin", "Cloud Storage")
+        ServiceType.PRODUCTIVITY -> stringProvider.getString("service_type_productivity", "kz.hashiroii.tiyin", "Productivity")
+        ServiceType.OTHER -> stringProvider.getString("service_type_other", "kz.hashiroii.tiyin", "Other")
+    }
+}
+
+private fun getPeriodLabel(stringProvider: CachedStringProvider, period: SubscriptionPeriod): String {
+    return when (period) {
+        SubscriptionPeriod.MONTHLY -> stringProvider.getString("period_monthly", "kz.hashiroii.tiyin", "Monthly")
+        SubscriptionPeriod.YEARLY -> stringProvider.getString("period_yearly", "kz.hashiroii.tiyin", "Yearly")
+        SubscriptionPeriod.WEEKLY -> stringProvider.getString("period_weekly", "kz.hashiroii.tiyin", "Weekly")
+        SubscriptionPeriod.DAILY -> stringProvider.getString("period_daily", "kz.hashiroii.tiyin", "Daily")
+        SubscriptionPeriod.QUARTERLY -> stringProvider.getString("period_quarterly", "kz.hashiroii.tiyin", "Quarterly")
     }
 }
 
 @Preview(name = "Light Theme", showBackground = true)
 @Composable
 private fun SubscriptionCardLightPreview() {
-    TiyinTheme(darkTheme = false) {
+    TiyinTheme(themePreference = "Light") {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -224,7 +244,8 @@ private fun SubscriptionCardLightPreview() {
                             secondaryColor = 0xFF191414,
                             serviceType = ServiceType.STREAMING
                         ),
-                        cost = "$9.99",
+                        amount = BigDecimal("9.99"),
+                        currency = "USD",
                         period = SubscriptionPeriod.MONTHLY,
                         nextPaymentDate = LocalDate.now().plusDays(5),
                         currentPaymentDate = LocalDate.now().minusDays(25)
@@ -238,7 +259,7 @@ private fun SubscriptionCardLightPreview() {
 @Preview(name = "Dark Theme", showBackground = true)
 @Composable
 private fun SubscriptionCardDarkPreview() {
-    TiyinTheme(darkTheme = true) {
+    TiyinTheme(themePreference = "Dark") {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -257,7 +278,8 @@ private fun SubscriptionCardDarkPreview() {
                             secondaryColor = 0xFF000000,
                             serviceType = ServiceType.STREAMING
                         ),
-                        cost = "$15.99",
+                        amount = BigDecimal("15.99"),
+                        currency = "USD",
                         period = SubscriptionPeriod.MONTHLY,
                         nextPaymentDate = LocalDate.now().plusDays(12),
                         currentPaymentDate = LocalDate.now().minusDays(18)

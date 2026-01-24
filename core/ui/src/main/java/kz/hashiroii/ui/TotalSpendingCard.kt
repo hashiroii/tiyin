@@ -84,7 +84,7 @@ fun TotalSpendingCard(
 @Preview(name = "Light Theme", showBackground = true)
 @Composable
 private fun TotalSpendingCardLightPreview() {
-    TiyinTheme(darkTheme = false) {
+    TiyinTheme(themePreference = "Light") {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {
@@ -104,7 +104,7 @@ private fun TotalSpendingCardLightPreview() {
 @Preview(name = "Dark Theme", showBackground = true)
 @Composable
 private fun TotalSpendingCardDarkPreview() {
-    TiyinTheme(darkTheme = true) {
+    TiyinTheme(themePreference = "Dark") {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {
