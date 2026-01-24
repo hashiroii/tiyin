@@ -38,7 +38,7 @@ fun TiyinChip(
 @Preview(name = "Light Theme", showBackground = true, widthDp = 200, heightDp = 100)
 @Composable
 private fun TiyinChipLightPreview() {
-    TiyinTheme(darkTheme = false) {
+    TiyinTheme(themePreference = "Light") {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {
@@ -55,7 +55,7 @@ private fun TiyinChipLightPreview() {
 @Preview(name = "Dark Theme", showBackground = true, widthDp = 200, heightDp = 100)
 @Composable
 private fun TiyinChipDarkPreview() {
-    TiyinTheme(darkTheme = true) {
+    TiyinTheme(themePreference = "Dark") {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {

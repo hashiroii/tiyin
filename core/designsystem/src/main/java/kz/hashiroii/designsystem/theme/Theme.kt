@@ -63,10 +63,17 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun TiyinTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themePreference: String = "System",
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val isSystemDark = isSystemInDarkTheme()
+    val darkTheme = when (themePreference) {
+        "Dark" -> true
+        "Light" -> false
+        "System" -> isSystemDark
+        else -> isSystemDark
+    }
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
