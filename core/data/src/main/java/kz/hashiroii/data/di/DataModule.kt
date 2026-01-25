@@ -1,5 +1,7 @@
 package kz.hashiroii.data.di
 
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,7 +14,9 @@ import kz.hashiroii.data.repository.PreferencesRepositoryImpl
 import kz.hashiroii.data.service.AppNameResolver
 import kz.hashiroii.data.service.ServiceRecognizer
 import kz.hashiroii.data.service.SubscriptionDetectionService
+import kz.hashiroii.domain.repository.AuthRepository
 import kz.hashiroii.domain.repository.CurrencyRepository
+import kz.hashiroii.domain.repository.FirestoreSubscriptionRepository
 import kz.hashiroii.domain.repository.NotificationRepository
 import kz.hashiroii.domain.repository.PreferencesRepository
 import javax.inject.Singleton
@@ -33,9 +37,16 @@ object DataModule {
     @Singleton
     fun provideNotificationRepository(
         subscriptionDetectionService: SubscriptionDetectionService,
-        mockDataSource: MockSubscriptionDataSource
+        mockDataSource: MockSubscriptionDataSource,
+        authRepository: AuthRepository,
+        firestoreSubscriptionRepository: FirestoreSubscriptionRepository
     ): NotificationRepository {
-        return NotificationRepositoryImpl(subscriptionDetectionService, mockDataSource)
+        return NotificationRepositoryImpl(
+            subscriptionDetectionService,
+            mockDataSource,
+            authRepository,
+            firestoreSubscriptionRepository
+        )
     }
 
     @Provides
@@ -56,5 +67,17 @@ object DataModule {
         preferencesRepositoryImpl: PreferencesRepositoryImpl
     ): PreferencesRepository {
         return preferencesRepositoryImpl
+    }
+    
+    @Provides
+    @Singleton
+    fun provideFirebaseAuth(): FirebaseAuth {
+        return FirebaseAuth.getInstance()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideFirebaseFirestore(): FirebaseFirestore {
+        return FirebaseFirestore.getInstance()
     }
 }

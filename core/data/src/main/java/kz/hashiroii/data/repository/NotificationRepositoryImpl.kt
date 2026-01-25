@@ -16,15 +16,20 @@ import kz.hashiroii.data.model.SubscriptionEntity
 import kz.hashiroii.data.service.NotificationListener
 import kz.hashiroii.data.service.SubscriptionDetectionService
 import kz.hashiroii.domain.model.service.Subscription
+import kz.hashiroii.domain.repository.AuthRepository
+import kz.hashiroii.domain.repository.FirestoreSubscriptionRepository
 import kz.hashiroii.domain.repository.NotificationRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class NotificationRepositoryImpl @Inject constructor(
     private val subscriptionDetectionService: SubscriptionDetectionService,
-    private val mockDataSource: MockSubscriptionDataSource
+    private val mockDataSource: MockSubscriptionDataSource,
+    private val authRepository: AuthRepository,
+    private val firestoreSubscriptionRepository: FirestoreSubscriptionRepository
 ) : NotificationRepository {
 
     private val _subscriptionEntities = MutableStateFlow<List<SubscriptionEntity>>(emptyList())
@@ -72,6 +77,14 @@ class NotificationRepositoryImpl @Inject constructor(
         }
         
         _subscriptionEntities.value = currentList
+        
+        repositoryScope.launch {
+            val user = authRepository.getCurrentUser()
+            if (user != null) {
+                val subscriptions = currentList.map { SubscriptionMapper.toDomain(it) }
+                firestoreSubscriptionRepository.syncSubscriptions(user.id, subscriptions)
+            }
+        }
     }
 
     override fun getSubscriptions(): Flow<List<Subscription>> {
