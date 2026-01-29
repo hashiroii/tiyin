@@ -1,0 +1,20 @@
+<resources>
+    <string name="subscription_manager_add_title">Жазылым қосу</string>
+    <string name="subscription_manager_edit_title">Жазылымды өңдеу</string>
+    <string name="subscription_manager_service_search">Қызметті іздеу</string>
+    <string name="subscription_manager_amount">Сома</string>
+    <string name="subscription_manager_currency">Валюта</string>
+    <string name="subscription_manager_start_date">Басталу күні</string>
+    <string name="subscription_manager_end_date">Аяқталу күні</string>
+    <string name="subscription_manager_period">Төлем мерзімі</string>
+    <string name="subscription_manager_add">Қосу</string>
+    <string name="subscription_manager_save">Сақтау</string>
+    <string name="subscription_manager_cancel">Болдырмау</string>
+    <string name="subscription_manager_confirm">Растау</string>
+    <string name="subscription_manager_select_currency">Валютаны таңдау</string>
+    <string name="subscription_manager_select_period">Мерзімді таңдау</string>
+    <string name="subscription_manager_delete">Жою</string>
+    <string name="subscription_manager_delete_confirmation">Бұл жазылымды жоюға сенімдісіз бе?</string>
+    <string name="subscription_manager_clear_service">Қызметті таңдауды жою</string>
+    <string name="nav_back">Артқа</string>
+</resources>

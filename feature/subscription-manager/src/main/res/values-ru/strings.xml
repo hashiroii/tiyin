@@ -1,0 +1,20 @@
+<resources>
+    <string name="subscription_manager_add_title">Добавить подписку</string>
+    <string name="subscription_manager_edit_title">Редактировать подписку</string>
+    <string name="subscription_manager_service_search">Поиск сервиса</string>
+    <string name="subscription_manager_amount">Сумма</string>
+    <string name="subscription_manager_currency">Валюта</string>
+    <string name="subscription_manager_start_date">Дата начала</string>
+    <string name="subscription_manager_end_date">Дата окончания</string>
+    <string name="subscription_manager_period">Период оплаты</string>
+    <string name="subscription_manager_add">Добавить</string>
+    <string name="subscription_manager_save">Сохранить</string>
+    <string name="subscription_manager_cancel">Отмена</string>
+    <string name="subscription_manager_confirm">Подтвердить</string>
+    <string name="subscription_manager_select_currency">Выбрать валюту</string>
+    <string name="subscription_manager_select_period">Выбрать период</string>
+    <string name="subscription_manager_delete">Удалить</string>
+    <string name="subscription_manager_delete_confirmation">Вы уверены, что хотите удалить эту подписку?</string>
+    <string name="subscription_manager_clear_service">Очистить выбор сервиса</string>
+    <string name="nav_back">Назад</string>
+</resources>
