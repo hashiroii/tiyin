@@ -1,6 +1,7 @@
 package kz.hashiroii.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,12 +49,14 @@ import java.time.format.FormatStyle
 fun SubscriptionCard(
     subscription: Subscription,
     logoUrl: String? = null,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         shape = RoundedCornerShape(16.dp),
     ) {
@@ -139,9 +142,9 @@ fun SubscriptionCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
-                    
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     ContinuousProgressIndicator(
                         progress = subscription.progressPercentage(today),
                         modifier = Modifier
@@ -152,24 +155,29 @@ fun SubscriptionCard(
                         trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                     )
                 }
-                
-                Spacer(modifier = Modifier.width(16.dp))
-                
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(
+                        R.string.subscription_next_payment,
+                        subscription.nextPaymentDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
                 TiyinChip(
                     text = getServiceTypeLabel(subscription.serviceInfo.serviceType)
                 )
             }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Text(
-                text = stringResource(
-                    R.string.subscription_next_payment,
-                    subscription.nextPaymentDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
         }
     }
 }
