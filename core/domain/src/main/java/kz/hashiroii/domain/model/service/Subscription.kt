@@ -13,6 +13,7 @@ enum class SubscriptionPeriod {
 }
 
 data class Subscription(
+    val id: String? = null,
     val serviceInfo: ServiceInfo,
     val amount: BigDecimal,
     val currency: String,
