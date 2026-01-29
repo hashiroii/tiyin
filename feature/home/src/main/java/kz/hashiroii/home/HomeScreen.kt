@@ -1,13 +1,21 @@
 package kz.hashiroii.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,22 +47,34 @@ import java.time.LocalDate
 
 @Composable
 fun HomeScreenRoute(
+    onAddSubscriptionClick: () -> Unit,
+    onEditSubscriptionClick: (String, String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     
     HomeScreen(
         uiState = uiState,
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.onIntent(HomeIntent.RefreshSubscriptions) },
         onIntent = viewModel::onIntent,
+        onAddSubscriptionClick = onAddSubscriptionClick,
+        onEditSubscriptionClick = onEditSubscriptionClick,
         modifier = modifier
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
     onIntent: (HomeIntent) -> Unit,
+    onAddSubscriptionClick: () -> Unit,
+    onEditSubscriptionClick: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -64,11 +84,14 @@ fun HomeScreen(
     ) {
         when (uiState) {
             is HomeUiState.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                )
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(64.dp) // Standard size
+                    )
+                }
             }
             
             is HomeUiState.Success -> {
@@ -76,36 +99,63 @@ fun HomeScreen(
                     uiState.totalCost,
                     uiState.totalCostCurrency
                 )
-                
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) {
-                    item {
-                        TotalSpendingCard(
-                            title = stringResource(R.string.total_spending),
-                            amount = spendingAmount,
-                            currency = uiState.totalCostCurrency
-                        )
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = onRefresh,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(vertical = 8.dp, horizontal = 0.dp)
+                        ) {
+                        item {
+                            TotalSpendingCard(
+                                title = stringResource(R.string.total_spending),
+                                amount = spendingAmount,
+                                currency = uiState.totalCostCurrency
+                            )
+                        }
+                        
+                        item {
+                            ActiveSubscriptionsRow(
+                                count = uiState.activeSubscriptionsCount,
+                                label = stringResource(R.string.active_subscriptions),
+                                onSortClick = {
+                                    // TODO: Implement sort functionality
+                                }
+                            )
+                        }
+                        
+                        itemsIndexed(
+                            items = uiState.subscriptions,
+                            key = { index, sub -> sub.id ?: "sub-$index-${sub.serviceInfo.domain}-${sub.serviceInfo.name}" }
+                        ) { _, subscription ->
+                            SubscriptionCard(
+                                subscription = subscription,
+                                logoUrl = uiState.logoUrls[subscription.serviceInfo.domain],
+                                onClick = {
+                                    onEditSubscriptionClick(
+                                        subscription.serviceInfo.name,
+                                        subscription.serviceInfo.domain
+                                    )
+                                }
+                            )
+                        }
+                        }
                     }
-                    
-                    item {
-                        ActiveSubscriptionsRow(
-                            count = uiState.activeSubscriptionsCount,
-                            label = stringResource(R.string.active_subscriptions),
-                            onSortClick = {
-                                // TODO: Implement sort functionality
-                            }
-                        )
-                    }
-                    
-                    items(
-                        items = uiState.subscriptions,
-                        key = { it.serviceInfo.name }
-                    ) { subscription ->
-                        SubscriptionCard(
-                            subscription = subscription,
-                            logoUrl = uiState.logoUrls[subscription.serviceInfo.domain]
+
+                    // Floating Action Button
+                    FloatingActionButton(
+                        onClick = onAddSubscriptionClick,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Subscription"
                         )
                     }
                 }
@@ -141,7 +191,9 @@ private fun HomeScreenLoadingLightPreview() {
         ) {
             HomeScreen(
                 uiState = HomeUiState.Loading,
-                onIntent = {}
+                onIntent = {},
+                onAddSubscriptionClick = {},
+                onEditSubscriptionClick = { _, _ -> }
             )
         }
     }
@@ -156,7 +208,9 @@ private fun HomeScreenLoadingDarkPreview() {
         ) {
             HomeScreen(
                 uiState = HomeUiState.Loading,
-                onIntent = {}
+                onIntent = {},
+                onAddSubscriptionClick = {},
+                onEditSubscriptionClick = { _, _ -> }
             )
         }
     }
@@ -207,7 +261,9 @@ private fun HomeScreenSuccessLightPreview() {
                     totalCost = 12470.40,
                     totalCostCurrency = "KZT"
                 ),
-                onIntent = {}
+                onIntent = {},
+                onAddSubscriptionClick = {},
+                onEditSubscriptionClick = { _, _ -> }
             )
         }
     }
@@ -243,7 +299,9 @@ private fun HomeScreenSuccessDarkPreview() {
                     totalCost = 4795.20,
                     totalCostCurrency = "KZT"
                 ),
-                onIntent = {}
+                onIntent = {},
+                onAddSubscriptionClick = {},
+                onEditSubscriptionClick = { _, _ -> }
             )
         }
     }
@@ -260,7 +318,9 @@ private fun HomeScreenErrorLightPreview() {
                 uiState = HomeUiState.Error(
                     message = UiText.DynamicString("Failed to load subscriptions")
                 ),
-                onIntent = {}
+                onIntent = {},
+                onAddSubscriptionClick = {},
+                onEditSubscriptionClick = { _, _ -> }
             )
         }
     }
@@ -277,7 +337,9 @@ private fun HomeScreenErrorDarkPreview() {
                 uiState = HomeUiState.Error(
                     message = UiText.DynamicString("Failed to load subscriptions")
                 ),
-                onIntent = {}
+                onIntent = {},
+                onAddSubscriptionClick = {},
+                onEditSubscriptionClick = { _, _ -> }
             )
         }
     }

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +17,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+import kz.hashiroii.domain.usecase.auth.GetCurrentUserUseCase
 import kz.hashiroii.domain.usecase.logo.GetLogoUrlUseCase
 import kz.hashiroii.domain.usecase.logo.PrefetchLogosUseCase
 import kz.hashiroii.domain.usecase.preferences.GetCurrencyUseCase
@@ -29,6 +32,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val getSubscriptionsUseCase: GetSubscriptionsUseCase,
     private val refreshSubscriptionsUseCase: RefreshSubscriptionsUseCase,
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val calculateTotalCostUseCase: CalculateTotalCostUseCase,
     private val getCurrencyUseCase: GetCurrencyUseCase,
     private val getLogoUrlUseCase: GetLogoUrlUseCase,
@@ -38,7 +42,19 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
+        // When local cache is empty and user is signed in, fetch from Firestore once (e.g. after clear data).
+        viewModelScope.launch {
+            val subscriptions = getSubscriptionsUseCase().first()
+            val user = getCurrentUserUseCase()
+            if (subscriptions.isEmpty() && user != null) {
+                refreshSubscriptionsUseCase()
+            }
+        }
+
         getCurrencyUseCase()
             .flatMapLatest { currency ->
                 combine(
@@ -97,7 +113,9 @@ class HomeViewModel @Inject constructor(
             }
             .flowOn(Dispatchers.Default)
             .onEach { state ->
-                _uiState.value = state
+                withContext(Dispatchers.Main.immediate) {
+                    _uiState.value = state
+                }
             }
             .launchIn(viewModelScope)
     }
@@ -113,6 +131,7 @@ class HomeViewModel @Inject constructor(
 
     private fun refreshSubscriptions() {
         viewModelScope.launch {
+            _isRefreshing.value = true
             try {
                 refreshSubscriptionsUseCase()
             } catch (e: Exception) {
@@ -121,6 +140,8 @@ class HomeViewModel @Inject constructor(
                         e.message ?: "Failed to refresh subscriptions"
                     )
                 )
+            } finally {
+                _isRefreshing.value = false
             }
         }
     }
