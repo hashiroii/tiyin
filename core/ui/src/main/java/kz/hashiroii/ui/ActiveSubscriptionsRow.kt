@@ -21,7 +21,8 @@ fun ActiveSubscriptionsRow(
     modifier: Modifier = Modifier,
     count: Int,
     label: String,
-    onSortClick: () -> Unit
+    onSortClick: () -> Unit,
+    trailingContent: (@Composable () -> Unit)? = null
 ) {
     Row(
         modifier = modifier
@@ -37,15 +38,19 @@ fun ActiveSubscriptionsRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        
-        IconButton(
-            onClick = onSortClick
-        ) {
-            Icon(
-                imageVector = Icons.Default.Sort,
-                contentDescription = "Sort",
-                tint = MaterialTheme.colorScheme.onSurface
-            )
+
+        if (trailingContent != null) {
+            trailingContent()
+        } else {
+            IconButton(
+                onClick = onSortClick
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Sort,
+                    contentDescription = "Sort",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }

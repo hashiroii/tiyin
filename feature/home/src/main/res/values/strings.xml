@@ -1,4 +1,8 @@
 <resources>
     <string name="total_spending">Total Spending</string>
     <string name="active_subscriptions">Active Subscriptions</string>
+    <string name="sort_subscriptions">Sort subscriptions</string>
+    <string name="sort_by_expiry_date">By expire date (soonest first)</string>
+    <string name="sort_by_cost">By cost</string>
+    <string name="sort_by_alphabet">By name (A–Z)</string>
 </resources>

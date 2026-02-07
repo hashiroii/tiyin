@@ -11,7 +11,8 @@ sealed interface HomeUiState {
         val activeSubscriptionsCount: Int,
         val totalCost: Double,
         val totalCostCurrency: String,
-        val logoUrls: Map<String, String?> = emptyMap()
+        val logoUrls: Map<String, String?> = emptyMap(),
+        val sortOrder: SubscriptionSortOrder = SubscriptionSortOrder.EXPIRY_DATE
     ) : HomeUiState
     
     data class Error(

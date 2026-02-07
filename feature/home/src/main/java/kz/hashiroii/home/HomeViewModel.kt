@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
@@ -44,6 +45,8 @@ class HomeViewModel @Inject constructor(
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    private val _sortOrder = MutableStateFlow(SubscriptionSortOrder.EXPIRY_DATE)
 
     init {
         // When local cache is empty and user is signed in, fetch from Firestore once (e.g. after clear data).
@@ -102,6 +105,15 @@ class HomeViewModel @Inject constructor(
                     }
                 }
             }
+            .combine(_sortOrder) { state, order ->
+                when (state) {
+                    is HomeUiState.Success -> state.copy(
+                        sortOrder = order,
+                        subscriptions = state.subscriptions.sortedBy(order)
+                    )
+                    else -> state
+                }
+            }
             .catch { e ->
                 emit(
                     HomeUiState.Error(
@@ -126,6 +138,7 @@ class HomeViewModel @Inject constructor(
                 // Already handled by the flow in init
             }
             is HomeIntent.RefreshSubscriptions -> refreshSubscriptions()
+            is HomeIntent.SetSortOrder -> _sortOrder.value = intent.order
         }
     }
 
