@@ -89,7 +89,7 @@ User action → HomeIntent → HomeViewModel → HomeUiState → HomeScreen (Com
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/tiyin.git
+   git clone https://github.com/hashiroii/tiyin.git
    cd tiyin
    ```
 
