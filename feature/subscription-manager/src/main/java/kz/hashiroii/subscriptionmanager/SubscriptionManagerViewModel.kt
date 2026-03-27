@@ -150,6 +150,11 @@ class SubscriptionManagerViewModel @Inject constructor(
                             serviceSearchResult = null
                         )
                     }
+
+                    SubscriptionManagerIntent.DismissDialog ->
+                        _uiState.value = state.copy(activeDialog = null)
+                    is SubscriptionManagerIntent.ShowDialog ->
+                        _uiState.value = state.copy(activeDialog = intent.dialog)
                 }
             }
             else -> {

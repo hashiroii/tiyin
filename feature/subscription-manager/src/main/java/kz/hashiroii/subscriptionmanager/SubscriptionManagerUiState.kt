@@ -21,7 +21,8 @@ sealed interface SubscriptionManagerUiState {
         val endDate: LocalDate? = null,
         val period: SubscriptionPeriod = SubscriptionPeriod.MONTHLY,
         val isLoading: Boolean = false,
-        val errorMessage: String? = null
+        val errorMessage: String? = null,
+        val activeDialog: ActiveDialog? = null
     ) : SubscriptionManagerUiState
     
     data object Success : SubscriptionManagerUiState
@@ -30,3 +31,5 @@ sealed interface SubscriptionManagerUiState {
         val message: String
     ) : SubscriptionManagerUiState
 }
+
+enum class ActiveDialog { DATE_PICKER, CURRENCY, PERIOD }

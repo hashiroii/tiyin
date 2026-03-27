@@ -102,7 +102,7 @@ fun SubscriptionManagerScreenRoute(
         onIntent = viewModel::onIntent,
         onBackClick = onBackClick,
         modifier = modifier,
-        getLogo = viewModel::getLogoUrl
+        getLogo = viewModel::getLogoUrl,
     )
 }
 
@@ -112,8 +112,7 @@ fun SubscriptionManagerScreen(
     onIntent: (SubscriptionManagerIntent) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
-    getLogo: (String) -> String? = { null }
-
+    getLogo: (String) -> String? = { null },
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize()
@@ -138,7 +137,7 @@ fun SubscriptionManagerScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues),
-                    getLogo = getLogo
+                    getLogo = getLogo,
                 )
             }
 
@@ -166,16 +165,12 @@ fun SubscriptionManagerScreen(
 
 @Composable
 private fun SubscriptionManagerContent(
+    modifier: Modifier = Modifier,
     state: SubscriptionManagerUiState.Editing,
     onIntent: (SubscriptionManagerIntent) -> Unit,
     getLogo: (String) -> String?,
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
 ) {
-    var showStartDatePicker by remember { mutableStateOf(false) }
-    var showEndDatePicker by remember { mutableStateOf(false) }
-    var showCurrencyDialog by remember { mutableStateOf(false) }
-    var showPeriodDialog by remember { mutableStateOf(false) }
 
     val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy")
     val context = LocalContext.current
@@ -370,7 +365,7 @@ private fun SubscriptionManagerContent(
                 modifier = Modifier
                     .weight(1f)
                     .clickable(enabled = !state.isLoading) {
-                        showCurrencyDialog = true
+                        onIntent(SubscriptionManagerIntent.ShowDialog(ActiveDialog.CURRENCY))
                         focusManager.clearFocus(true) },
                 readOnly = true,
                 enabled = false
@@ -408,7 +403,7 @@ private fun SubscriptionManagerContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(enabled = !state.isLoading) {
-                    showPeriodDialog = true
+                    onIntent(SubscriptionManagerIntent.ShowDialog(ActiveDialog.PERIOD))
                     focusManager.clearFocus(true) },
             readOnly = true,
             enabled = false
@@ -441,7 +436,7 @@ private fun SubscriptionManagerContent(
                     enabled = !state.isLoading
                 ) {
                     focusManager.clearFocus(true)
-                    showStartDatePicker = true
+                    onIntent(SubscriptionManagerIntent.ShowDialog(ActiveDialog.DATE_PICKER))
                   },
             readOnly = true,
             enabled = false
@@ -522,39 +517,39 @@ private fun SubscriptionManagerContent(
     }
 
     // Date Pickers
-    if (showStartDatePicker) {
+    if (state.activeDialog == ActiveDialog.DATE_PICKER) {
         DatePickerDialog(
             initialDate = state.startDate ?: LocalDate.now(),
             onDateSelected = { date ->
                 onIntent(SubscriptionManagerIntent.UpdateStartDate(date))
-                showStartDatePicker = false
+                onIntent(SubscriptionManagerIntent.DismissDialog)
             },
-            onDismiss = { showStartDatePicker = false }
+            onDismiss = { onIntent(SubscriptionManagerIntent.DismissDialog) }
         )
     }
 
 
     // Currency Dialog
-    if (showCurrencyDialog) {
+    if (state.activeDialog == ActiveDialog.CURRENCY) {
         CurrencySelectionDialog(
             currentCurrency = state.currency,
             onCurrencySelected = { currency ->
                 onIntent(SubscriptionManagerIntent.UpdateCurrency(currency))
-                showCurrencyDialog = false
+                onIntent(SubscriptionManagerIntent.DismissDialog)
             },
-            onDismiss = { showCurrencyDialog = false }
+            onDismiss = { onIntent(SubscriptionManagerIntent.DismissDialog)}
         )
     }
 
     // Period Dialog
-    if (showPeriodDialog) {
+    if (state.activeDialog == ActiveDialog.PERIOD) {
         PeriodSelectionDialog(
             currentPeriod = state.period,
             onPeriodSelected = { period ->
                 onIntent(SubscriptionManagerIntent.UpdatePeriod(period))
-                showPeriodDialog = false
+                onIntent(SubscriptionManagerIntent.DismissDialog)
             },
-            onDismiss = { showPeriodDialog = false }
+            onDismiss = { onIntent(SubscriptionManagerIntent.DismissDialog) }
         )
     }
 }

@@ -15,4 +15,6 @@ sealed interface SubscriptionManagerIntent {
     data object SaveSubscription : SubscriptionManagerIntent
     data object DeleteSubscription : SubscriptionManagerIntent
     data object ClearSelectedService : SubscriptionManagerIntent
+    data class ShowDialog(val dialog: ActiveDialog) : SubscriptionManagerIntent
+    data object DismissDialog : SubscriptionManagerIntent
 }
