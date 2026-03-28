@@ -7,9 +7,11 @@ import dagger.hilt.components.SingletonComponent
 import kz.hashiroii.data.repository.AuthRepositoryImpl
 import kz.hashiroii.data.repository.FirestoreSubscriptionRepositoryImpl
 import kz.hashiroii.data.repository.LogoRepositoryImpl
+import kz.hashiroii.data.repository.RoomSubscriptionRepositoryImpl
 import kz.hashiroii.domain.repository.AuthRepository
 import kz.hashiroii.domain.repository.FirestoreSubscriptionRepository
 import kz.hashiroii.domain.repository.LogoRepository
+import kz.hashiroii.domain.repository.RoomSubscriptionRepository
 import javax.inject.Singleton
 
 @Module
@@ -33,4 +35,10 @@ abstract class RepositoryModule {
     abstract fun bindFirestoreSubscriptionRepository(
         firestoreSubscriptionRepositoryImpl: FirestoreSubscriptionRepositoryImpl
     ): FirestoreSubscriptionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRoomSubscriptionRepository(
+        roomSubscriptionRepositoryImpl: RoomSubscriptionRepositoryImpl
+    ) : RoomSubscriptionRepository
 }

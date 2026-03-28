@@ -4,11 +4,12 @@ import java.util.UUID
 import kz.hashiroii.domain.model.service.Subscription
 import kz.hashiroii.domain.repository.NotificationRepository
 import kz.hashiroii.domain.repository.FirestoreSubscriptionRepository
+import kz.hashiroii.domain.repository.RoomSubscriptionRepository
 import kz.hashiroii.domain.usecase.auth.GetCurrentUserUseCase
 import javax.inject.Inject
 
 class AddSubscriptionUseCase @Inject constructor(
-    private val notificationRepository: NotificationRepository,
+    private val roomSubscriptionRepository: RoomSubscriptionRepository,
     private val firestoreSubscriptionRepository: FirestoreSubscriptionRepository,
     private val getCurrentUserUseCase: GetCurrentUserUseCase
 ) {
@@ -20,7 +21,7 @@ class AddSubscriptionUseCase @Inject constructor(
             val subscriptionWithId = subscription.copy(id = docId)
 
             // Save locally first so UI updates immediately; sync to Firestore best-effort.
-            notificationRepository.addSubscription(subscriptionWithId)
+            roomSubscriptionRepository.addSubscription(subscriptionWithId)
             getCurrentUserUseCase()?.let { user ->
                 firestoreSubscriptionRepository.saveSubscription(user.id, subscriptionWithId, docId)
                     .onFailure { /* sync failed; subscription is still saved locally */ }

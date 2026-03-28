@@ -51,25 +51,6 @@ class NotificationRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun refreshSubscriptions(userId: String?) {
-        withContext(Dispatchers.IO) {
-            if (userId == null) {
-                subscriptionDao.deleteAll()
-                return@withContext
-            }
-            try {
-                val today = LocalDate.now()
-                val subscriptions = firestoreSubscriptionRepository.getUserSubscriptions(userId).first()
-                val rolledSubscriptions = subscriptions.map { it.rolledIfExpired(today) }
-                val roomEntities = rolledSubscriptions.map { SubscriptionMapper.toEntity(it).toRoomEntity() }
-                subscriptionDao.replaceAll(roomEntities)
-                firestoreSubscriptionRepository.syncSubscriptions(userId, rolledSubscriptions)
-            } catch (e: Exception) {
-                // Firestore failed (e.g. API key expired); keep existing local data.
-            }
-        }
-    }
-
     private fun observeNotifications() {
         repositoryScope.launch {
             notificationEvents.collect { notification ->
@@ -96,70 +77,6 @@ class NotificationRepositoryImpl @Inject constructor(
                     .map { SubscriptionMapper.toDomain(it) }
                 firestoreSubscriptionRepository.syncSubscriptions(user.id, subscriptions)
             }
-        }
-    }
-
-    override fun getSubscriptions(): Flow<List<Subscription>> {
-        return subscriptionDao.getAllFlow().map { roomEntities ->
-            val today = LocalDate.now()
-            val domainList = roomEntities.map { it.toEntity() }.map { SubscriptionMapper.toDomain(it) }
-            val rolledList = domainList.map { it.rolledIfExpired(today) }
-            rolledList.zip(domainList).filter { (rolled, orig) -> rolled != orig }.forEach { (rolled, orig) ->
-                repositoryScope.launch {
-                    withContext(Dispatchers.IO) {
-                        updateSubscription(orig, rolled)
-                        authRepository.getCurrentUser()?.let { user ->
-                            rolled.id?.let { id ->
-                                firestoreSubscriptionRepository.updateSubscription(user.id, id, rolled)
-                            }
-                        }
-                    }
-                }
-            }
-            rolledList
-        }
-    }
-
-    override suspend fun addSubscription(subscription: Subscription) {
-        withContext(Dispatchers.IO) {
-            val entity = SubscriptionMapper.toEntity(subscription)
-            subscriptionDao.insert(entity.toRoomEntity())
-        }
-    }
-
-    override suspend fun updateSubscription(oldSubscription: Subscription, newSubscription: Subscription) {
-        withContext(Dispatchers.IO) {
-            val newEntity = SubscriptionMapper.toEntity(newSubscription)
-            subscriptionDao.update(newEntity.toRoomEntity())
-        }
-    }
-
-    override suspend fun getSubscriptionById(serviceName: String, serviceDomain: String): Subscription? {
-        return withContext(Dispatchers.IO) {
-            val subscription = subscriptionDao.getByServiceNameAndDomain(serviceName, serviceDomain)
-                ?.toEntity()
-                ?.let { SubscriptionMapper.toDomain(it) } ?: return@withContext null
-            val today = LocalDate.now()
-            val rolled = subscription.rolledIfExpired(today)
-            if (rolled != subscription) {
-                updateSubscription(subscription, rolled)
-                authRepository.getCurrentUser()?.let { user ->
-                    rolled.id?.let { id ->
-                        firestoreSubscriptionRepository.updateSubscription(user.id, id, rolled)
-                    }
-                }
-            }
-            rolled
-        }
-    }
-
-    override suspend fun deleteSubscription(subscription: Subscription) {
-        withContext(Dispatchers.IO) {
-            subscription.id?.let { subscriptionDao.deleteById(it) }
-                ?: subscriptionDao.deleteByServiceNameAndDomain(
-                    subscription.serviceInfo.name,
-                    subscription.serviceInfo.domain
-                )
         }
     }
 }

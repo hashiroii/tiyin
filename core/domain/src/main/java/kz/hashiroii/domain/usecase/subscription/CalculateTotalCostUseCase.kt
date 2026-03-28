@@ -4,6 +4,7 @@ import kz.hashiroii.domain.repository.CurrencyRepository
 import kz.hashiroii.domain.repository.NotificationRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kz.hashiroii.domain.repository.RoomSubscriptionRepository
 import java.math.BigDecimal
 import java.math.RoundingMode
 import javax.inject.Inject
@@ -14,14 +15,14 @@ data class TotalCostResult(
 )
 
 class CalculateTotalCostUseCase @Inject constructor(
-    private val notificationRepository: NotificationRepository,
+    private val roomSubscriptionRepository: RoomSubscriptionRepository,
     private val currencyRepository: CurrencyRepository
 ) {
     operator fun invoke(
         targetCurrency: String = "KZT"
     ): Flow<TotalCostResult> {
         return combine(
-            notificationRepository.getSubscriptions(),
+            roomSubscriptionRepository.getSubscriptions(),
             currencyRepository.getExchangeRates()
         ) { subscriptions, rates ->
             val targetRate = rates[targetCurrency] ?: 1.0

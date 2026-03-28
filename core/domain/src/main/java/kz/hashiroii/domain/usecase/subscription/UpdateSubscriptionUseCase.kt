@@ -3,11 +3,12 @@ package kz.hashiroii.domain.usecase.subscription
 import kz.hashiroii.domain.model.service.Subscription
 import kz.hashiroii.domain.repository.NotificationRepository
 import kz.hashiroii.domain.repository.FirestoreSubscriptionRepository
+import kz.hashiroii.domain.repository.RoomSubscriptionRepository
 import kz.hashiroii.domain.usecase.auth.GetCurrentUserUseCase
 import javax.inject.Inject
 
 class UpdateSubscriptionUseCase @Inject constructor(
-    private val notificationRepository: NotificationRepository,
+    private val roomSubscriptionRepository: RoomSubscriptionRepository,
     private val firestoreSubscriptionRepository: FirestoreSubscriptionRepository,
     private val getCurrentUserUseCase: GetCurrentUserUseCase
 ) {
@@ -16,7 +17,7 @@ class UpdateSubscriptionUseCase @Inject constructor(
             val subscriptionId = oldSubscription.id ?: return Result.failure(IllegalStateException("Subscription has no id"))
             val updated = newSubscription.copy(id = subscriptionId)
 
-            notificationRepository.updateSubscription(oldSubscription, updated)
+            roomSubscriptionRepository.updateSubscription(oldSubscription, updated)
             getCurrentUserUseCase()?.let { user ->
                 firestoreSubscriptionRepository.updateSubscription(user.id, subscriptionId, updated)
                     .onFailure { /* sync failed; local update already applied */ }
