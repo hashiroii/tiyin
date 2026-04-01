@@ -12,6 +12,16 @@ A modern Android subscription tracker built with **Jetpack Compose**, **Firebase
 
 ---
 
+##  Why Tiyin exists
+
+Managing subscriptions is annoying in real life. People use multiple services like Netflix, Spotify, and others, and over time it becomes hard to track how much money is actually being spent every month. 
+
+Sometimes subscriptions renew without notice, and users only realize it after money is already gone. From my experience, most people don’t track this properly and just accept the loss.
+
+Tiyin was created to solve this problem in a simple way. The goal is to give users a clear view of all their subscriptions, show the real total cost, and help avoid unexpected payments.
+
+---
+
 ##  Features
 
 -  **Subscription management** — Add, edit, and delete subscriptions with service auto-recognition
