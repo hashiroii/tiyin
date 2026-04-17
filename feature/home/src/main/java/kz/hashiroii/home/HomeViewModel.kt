@@ -101,6 +101,11 @@ class HomeViewModel @Inject constructor(
                 _uiState.value = HomeUiState.Error(
                     UiText.DynamicString(e.message ?: "Failed to refresh")
                 )
+            } finally {
+                val updated = _uiState.value
+                if (updated is HomeUiState.Success) {
+                    _uiState.value = updated.copy(isRefreshing = false)
+                }
             }
         }
     }

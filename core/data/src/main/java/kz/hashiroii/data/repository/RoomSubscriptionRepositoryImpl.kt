@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -34,27 +35,15 @@ class RoomSubscriptionRepositoryImpl @Inject constructor(
         return subscriptionDao.getAllFlow().map { roomEntities ->
             val today = LocalDate.now()
             val domainList = roomEntities.map { it.toEntity() }.map { SubscriptionMapper.toDomain(it) }
-            val rolledList = domainList.map { it.rolledIfExpired(today) }
-            rolledList.zip(domainList).filter { (rolled, orig) -> rolled != orig }.forEach { (rolled, orig) ->
-                repositoryScope.launch {
-                    withContext(Dispatchers.IO) {
-                        updateSubscription(orig, rolled)
-                        authRepository.getCurrentUser()?.let { user ->
-                            rolled.id?.let { id ->
-                                firestoreSubscriptionRepository.updateSubscription(user.id, id, rolled)
-                            }
-                        }
-                    }
-                }
-            }
-            rolledList
+            // Just return the rolled list for display — don't write back here
+            domainList.map { it.rolledIfExpired(today) }
         }
+            .distinctUntilChanged() // ← extra safety: suppress duplicate emissions
     }
 
     override suspend fun refreshSubscriptions(userId: String?) {
         withContext(Dispatchers.IO) {
             if (userId == null) {
-                subscriptionDao.deleteAll()
                 return@withContext
             }
             try {
